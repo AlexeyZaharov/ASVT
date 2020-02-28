@@ -106,7 +106,7 @@ void get_solution(size_t n, std::unordered_set<std::string>& neccesary_miniterms
         std::cout << value << ' ';
     }
 
-    std::cout << std:: endl << "Choose others neccesary solution:" << std::endl;
+    std::cout << std:: endl << "Choose others neccesary miniterms:" << std::endl;
     write_table(n, neccesary_miniterms, dnf);
 }
 
