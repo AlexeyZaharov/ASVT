@@ -16,40 +16,98 @@ size_t get_weight(const std::string& str) {
     return weight;
 }
 
-char is_equal(const std::string& miniterm, const std::string& dnf) {
-    char symbol = '*';
+bool is_equal(const std::string& miniterm, const std::string& dnf) {
+    bool success = true;
 
     for (size_t i = 0; i < miniterm.size(); ++i) {
         if (miniterm[i] != '~' && miniterm[i] != dnf[i]) {
-            symbol = ' ';
+            success = false;
             break;
         }
     }
 
-    return symbol;
+    return success;
 }
 
-void write_table(size_t n, const std::unordered_set<std::string>& neccesary_miniterms, const std::vector<std::string>& dnf) {
+void write_table(size_t n, const std::unordered_set<std::string>& neccesary_miniterms, const std::unordered_set<std::string>& dnf) {
     std::cout << std::endl << std::setw((n + 1)*(dnf.size() + 1)) << std::setfill('-') << ' ' << std::endl << std::setfill(' ');
 
-    for (auto i = 0; i < dnf.size() + 1; i++) {
-        if (i == 0) {
-            std::cout << std::setw(n) << ' ' << '|';
-        }
-        else {
-            std::cout << std::setw(n) << dnf[i - 1] << '|';
-        }
+    std::cout << std::setw(n) << ' ' << '|';
+
+    for (auto& value : dnf) {
+        std::cout << std::setw(n) << value << '|';
     }
 
     std::cout << std::endl << std::setw((n + 1)*(dnf.size() + 1)) << std::setfill('-') << ' ' << std::endl << std::setfill(' ');
 
     for (auto& el : neccesary_miniterms) {
         std::cout << std::setw(n) << el << '|';
-        for (auto j = 0; j < dnf.size(); j++) {
-            std::cout << std::setw(n) << is_equal(el, dnf[j]) << '|';
+        for (auto& value : dnf) {
+            std::cout << std::setw(n) << (is_equal(el, value) ? '*' : ' ') << '|';
         }
         std::cout << std::endl << std::setw((n + 1)*(dnf.size() + 1)) << std::setfill('-') << ' ' << std::endl << std::setfill(' ');
     }
+}
+
+void get_solution(size_t n, std::unordered_set<std::string>& neccesary_miniterms, std::unordered_set<std::string>& dnf) {
+    std::unordered_set<std::string> solution{};
+
+    std::unordered_map<std::string, std::vector<std::string>> dnf_miniterm_map{};
+    std::unordered_map<std::string, std::vector<std::string>> miniterm_dnf_map{};
+
+    write_table(n, neccesary_miniterms, dnf);
+
+    for (auto& el : neccesary_miniterms) {
+        for (auto& value : dnf) {
+            if (is_equal(el, value)) {
+                dnf_miniterm_map[value].push_back(el);
+                miniterm_dnf_map[el].push_back(value);
+            }
+        }
+    }
+
+    std::vector<std::string> unneccesary_dnf_values{};
+    for (auto& value : dnf_miniterm_map) {
+        if (value.second.size() == 1) {
+            solution.insert(value.second[0]);
+            for (auto& key : miniterm_dnf_map[value.second[0]]) {
+                unneccesary_dnf_values.push_back(key);
+            }
+        }
+    }
+
+    for (auto& value : unneccesary_dnf_values) {
+        if (dnf.find(value) != dnf.end()) {
+            dnf.erase(dnf.find(value));
+        }
+    }
+
+    for (auto& value : solution) {
+        neccesary_miniterms.erase(neccesary_miniterms.find(value));
+    }
+
+    std::unordered_map<std::string, std::vector<std::string>> unused_miniterm{};
+    for (auto& el : neccesary_miniterms) {
+        for (auto& value : dnf) {
+            if (!is_equal(el, value)) {
+                unused_miniterm[el].push_back(value);
+            }
+        }
+    }
+
+    for (auto& miniterm : unused_miniterm) {
+        if (miniterm.second.size() == dnf.size()) {
+            neccesary_miniterms.erase(neccesary_miniterms.find(miniterm.first));
+        }
+    }
+
+    std::cout << "Neccesary miniterms:" << std::endl;
+    for (auto& value : solution) {
+        std::cout << value << ' ';
+    }
+
+    std::cout << std:: endl << "Choose others neccesary solution:" << std::endl;
+    write_table(n, neccesary_miniterms, dnf);
 }
 
 int main() {
@@ -68,12 +126,12 @@ int main() {
 
     if (fin.is_open()) {
         std::unordered_map<size_t, std::vector<std::pair<std::string, bool>>> map;
-        std::vector<std::string> dnf;
+        std::unordered_set<std::string> dnf;
         std::string str;
 
         while (fin >> str) {
             map[get_weight(str)].push_back({str, true});
-            dnf.push_back(str);
+            dnf.insert(str);
             str = "";
         }
 
@@ -135,11 +193,7 @@ int main() {
         }
         while (again);
 
-        /*for (auto& i : neccesary_miniterms) {
-            std::cout << i << std::endl;
-        }*/
-
-        write_table(n, neccesary_miniterms, dnf);
+        get_solution(n, neccesary_miniterms, dnf);
 
         fin.close();
     }
