@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <vector>
 #include <unordered_set>
+#include <sstream>
 
 size_t get_weight(const std::string& str) {
     size_t weight = 0;
@@ -30,22 +31,35 @@ bool is_equal(const std::string& miniterm, const std::string& function_positive_
 }
 
 void write_table(size_t n, const std::unordered_set<std::string>& neccesary_miniterms, const std::unordered_set<std::string>& function_positive_value) {
-    std::cout << std::endl << std::setw((n + 1)*(function_positive_value.size() + 1)) << std::setfill('-') << ' ' << std::endl << std::setfill(' ');
+    std::cout << std::endl << std::setw((2 * n + 1)*(function_positive_value.size() + 1)) << std::setfill('-') << ' ' << std::endl << std::setfill(' ');
 
-    std::cout << std::setw(n) << ' ' << '|';
+    std::cout << std::setw(2 * n) << ' ' << '|';
 
     for (auto& value : function_positive_value) {
-        std::cout << std::setw(n) << value << '|';
+        std::cout << std::setw(2 * n) << value << '|';
     }
 
-    std::cout << std::endl << std::setw((n + 1)*(function_positive_value.size() + 1)) << std::setfill('-') << ' ' << std::endl << std::setfill(' ');
+    std::cout << std::endl << std::setw((2 * n + 1)*(function_positive_value.size() + 1)) << std::setfill('-') << ' ' << std::endl << std::setfill(' ');
 
     for (auto& miniterm : neccesary_miniterms) {
-        std::cout << std::setw(n) << miniterm << '|';
-        for (auto& value : function_positive_value) {
-            std::cout << std::setw(n) << (is_equal(miniterm, value) ? '*' : ' ') << '|';
+        std::ostringstream out{};
+
+        out << '{';
+        for (int i = 0; i < miniterm.size(); ++i) {
+            if (miniterm[n - 1 - i] == '0') {
+                out << '-' << i;
+            }
+            else if (miniterm[n - 1 - i] == '1') {
+                out << '+' << i;
+            }
         }
-        std::cout << std::endl << std::setw((n + 1)*(function_positive_value.size() + 1)) << std::setfill('-') << ' ' << std::endl << std::setfill(' ');
+        out << "}";
+
+        std::cout << std::setw(2 * n) << out.str() << '|';
+        for (auto& value : function_positive_value) {
+            std::cout << std::setw(2 * n) << (is_equal(miniterm, value) ? '*' : ' ') << '|';
+        }
+        std::cout << std::endl << std::setw((2 * n + 1)*(function_positive_value.size() + 1)) << std::setfill('-') << ' ' << std::endl << std::setfill(' ');
     }
 }
 
@@ -105,7 +119,19 @@ void get_solution(size_t n, std::unordered_set<std::string>& miniterms,
 
     std::cout << "Neccesary miniterms:" << std::endl;
     for (auto& value : neccesary_part_of_solution) {
-        std::cout << value << ' ';
+        std::ostringstream out{};
+        out << '{';
+        for (int i = 0; i < value.size(); ++i) {
+            if (value[n - 1 - i] == '0') {
+                out << '-' << i;
+            }
+            else if (value[n - 1 - i] == '1') {
+                out << '+' << i;
+            }
+        }
+        out << "}";
+
+        std::cout << out.str() << ' ';
     }
 
     std::cout << std:: endl << "Choose others neccesary solution:" << std::endl;
