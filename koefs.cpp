@@ -5,6 +5,38 @@
 #include <unordered_set>
 #include <sstream>
 
+std::vector<std::string> get_solution(std::unordered_map<std::string, size_t>& koef_times, std::unordered_map<std::string, std::unordered_set<std::string>>& equation_koef) {
+    std::vector<std::string> solution;
+
+    while(!equation_koef.empty()) {
+        std::pair<std::string, size_t> max_coef{"---------------------------", 0};
+
+        for (auto& koef : koef_times) {
+            if (koef.second > max_coef.second || koef.second == max_coef.second && koef.first.size() < max_coef.first.size()) {
+                max_coef = koef;
+            }
+        }
+
+        solution.push_back(max_coef.first);
+
+        std::vector<std::string> delete_equations;
+        for (auto& equation : equation_koef) {
+            if (equation.second.find(max_coef.first) != equation.second.end()) {
+                delete_equations.push_back(equation.first);
+            }
+        }
+
+        for(auto& equation : delete_equations) {
+            for (auto& koef : equation_koef[equation]) {
+                --koef_times[koef];
+            }
+            equation_koef.erase(equation_koef.find(equation));
+        }
+    }
+
+    return solution;
+}
+
 int main() {
     int n = 6;
     std::ifstream fin{};
@@ -91,6 +123,11 @@ int main() {
             }
         }
 
+        std::cout << "System of equation:" << std::endl;
+
+        std::unordered_map<std::string, std::unordered_set<std::string>> equation_koef;
+        std::unordered_map<std::string, size_t> koef_times;
+
         for (auto& function_value : integer_function_positive_values) {
             if (function_positive_value.find(function_value.to_string()) == function_positive_value.end()) {
                 continue;
@@ -113,10 +150,20 @@ int main() {
 
                 if (set_of_bad_monoms.find(out.str()) == set_of_bad_monoms.end()) {
                     one_equation += out.str() + " + ";
+
+                    equation_koef[str_function_value].insert(out.str());
+                    ++koef_times[out.str()];
                 }
             }
 
             std::cout << std::string(one_equation.begin(), one_equation.end() - 2) << "= " << str_function_value << std::endl;
+        }
+
+        auto solution = get_solution(koef_times, equation_koef);
+
+        std::cout << std::endl << "Solution is:" << std::endl;
+        for (auto& koef : solution) {
+            std::cout << koef << ' ';
         }
 
         fin.close();
